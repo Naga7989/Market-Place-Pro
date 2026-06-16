@@ -1,0 +1,242 @@
+# =============================================================
+# KUBERNETES MYSQL STATEFULSET + PVC + SECRET
+# India-First Enterprise Marketplace Platform
+# MySQL 8.0 with persistent storage
+# =============================================================
+
+---
+# MySQL Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: marketplace-db-secret
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-mysql
+    app.kubernetes.io/component: secret
+type: Opaque
+stringData:
+  # IMPORTANT: Override these values using sealed-secrets or AWS Secrets Manager
+  mysql-root-password: "CHANGE_ME_ROOT_PASSWORD"
+  mysql-user: "marketplace_user"
+  mysql-password: "CHANGE_ME_DB_PASSWORD"
+  mysql-database: "marketplace_db"
+
+---
+# MySQL ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-mysql-config
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-mysql
+    app.kubernetes.io/component: config
+data:
+  my.cnf: |
+    [mysqld]
+    character-set-server         = utf8mb4
+    collation-server             = utf8mb4_unicode_ci
+    default-authentication-plugin = mysql_native_password
+    max_connections              = 1000
+    innodb_buffer_pool_size      = 4G
+    innodb_log_file_size         = 512M
+    innodb_flush_log_at_trx_commit = 1
+    innodb_flush_method          = O_DIRECT
+    innodb_io_capacity           = 2000
+    innodb_io_capacity_max       = 4000
+    sync_binlog                  = 1
+    slow_query_log               = 1
+    slow_query_log_file          = /var/log/mysql/slow.log
+    long_query_time              = 1
+    log_error                    = /var/log/mysql/error.log
+    general_log                  = 0
+    binlog_expire_logs_seconds   = 604800
+    server-id                    = 1
+    log_bin                      = mysql-bin
+    binlog_format                = ROW
+    read_buffer_size             = 256K
+    sort_buffer_size             = 512K
+    join_buffer_size             = 256K
+    tmp_table_size               = 64M
+    max_heap_table_size          = 64M
+    table_open_cache             = 4000
+    table_definition_cache       = 2000
+    key_buffer_size              = 32M
+    [client]
+    default-character-set        = utf8mb4
+    [mysql]
+    default-character-set        = utf8mb4
+
+---
+# MySQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: marketplace-mysql
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: kubectl
+    app: marketplace-mysql
+spec:
+  serviceName: marketplace-mysql-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketplace-mysql
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: marketplace-mysql
+        app.kubernetes.io/name: marketplace-mysql
+        app.kubernetes.io/component: database
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "8Gi"
+              cpu: "4000m"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: marketplace-db-secret
+                  key: mysql-root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: marketplace-db-secret
+                  key: mysql-database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: marketplace-db-secret
+                  key: mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: marketplace-db-secret
+                  key: mysql-password
+            - name: TZ
+              value: "Asia/Kolkata"
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: mysql-config
+              mountPath: /etc/mysql/conf.d/marketplace.cnf
+              subPath: my.cnf
+            - name: mysql-logs
+              mountPath: /var/log/mysql
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysqladmin ping -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysql -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD} -e 'SELECT 1'"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysqladmin ping -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 18  # 3 minutes startup window
+      volumes:
+        - name: mysql-config
+          configMap:
+            name: marketplace-mysql-config
+        - name: mysql-logs
+          emptyDir: {}
+        - name: initdb
+          emptyDir: {}
+      securityContext:
+        fsGroup: 999
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+        labels:
+          app.kubernetes.io/name: marketplace-mysql
+          app.kubernetes.io/component: storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "gp3"   # AWS EKS gp3 storage class
+        resources:
+          requests:
+            storage: 20Gi
+
+---
+# MySQL Headless Service (for StatefulSet DNS)
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketplace-mysql-headless
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-mysql
+    app.kubernetes.io/component: service-headless
+spec:
+  clusterIP: None
+  selector:
+    app: marketplace-mysql
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: mysql
+  publishNotReadyAddresses: false
+
+---
+# MySQL ClusterIP Service (for application connections)
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketplace-mysql-service
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-mysql
+    app.kubernetes.io/component: service
+spec:
+  selector:
+    app: marketplace-mysql
+  type: ClusterIP
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: mysql

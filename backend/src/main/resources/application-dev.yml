@@ -1,0 +1,33 @@
+spring:
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  flyway:
+    enabled: true
+    out-of-order: true
+
+logging:
+  level:
+    root: INFO
+    com.marketplace: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.web: DEBUG
+
+app:
+  frontend-url: http://localhost:3000
+  backend-url: http://localhost:8080
+
+# Dev-only: relax actuator security
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

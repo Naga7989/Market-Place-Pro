@@ -1,0 +1,180 @@
+# =============================================================
+# KUBERNETES REDIS DEPLOYMENT + SERVICE + PVC
+# India-First Enterprise Marketplace Platform
+# Redis 7 with persistent storage
+# =============================================================
+
+---
+# Redis Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: marketplace-redis-secret
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-redis
+    app.kubernetes.io/component: secret
+type: Opaque
+stringData:
+  redis-password: "CHANGE_ME_REDIS_PASSWORD"
+
+---
+# Redis ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-redis-config
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-redis
+    app.kubernetes.io/component: config
+data:
+  redis.conf: |
+    maxmemory 2gb
+    maxmemory-policy allkeys-lru
+    appendonly yes
+    appendfsync everysec
+    no-appendfsync-on-rewrite yes
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    save 900 1
+    save 300 10
+    save 60 10000
+    loglevel notice
+    databases 16
+    timeout 300
+    tcp-keepalive 300
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+    latency-tracking yes
+    latency-tracking-info-percentiles 50 99 99.9
+
+---
+# Redis PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: marketplace-redis-pvc
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-redis
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "gp3"
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketplace-redis
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/managed-by: kubectl
+    app: marketplace-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketplace-redis
+  strategy:
+    type: Recreate  # Recreate since data is persisted; avoids dual write issues
+  template:
+    metadata:
+      labels:
+        app: marketplace-redis
+        app.kubernetes.io/name: marketplace-redis
+        app.kubernetes.io/component: cache
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "100m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: marketplace-redis-secret
+                  key: redis-password
+            - name: TZ
+              value: "Asia/Kolkata"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-config
+              mountPath: /etc/redis
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "redis-cli -a $REDIS_PASSWORD ping"
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "redis-cli -a $REDIS_PASSWORD ping"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: marketplace-redis-pvc
+        - name: redis-config
+          configMap:
+            name: marketplace-redis-config
+      securityContext:
+        fsGroup: 999
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketplace-redis-service
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-redis
+    app.kubernetes.io/component: service
+spec:
+  selector:
+    app: marketplace-redis
+  type: ClusterIP
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: redis

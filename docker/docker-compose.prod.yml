@@ -1,0 +1,201 @@
+version: "3.9"
+
+# =============================================================
+# INDIA-FIRST ENTERPRISE MARKETPLACE PLATFORM
+# Docker Compose - Production Overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # MySQL - Production: no exposed port, resource limits, logging
+  # -----------------------------------------------------------
+  mysql:
+    ports: !reset []          # remove host port binding in production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+        reservations:
+          memory: 1g
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+        labels: "com.marketplace.service"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_connections=1000
+      --innodb_buffer_pool_size=1G
+      --innodb_log_file_size=256M
+      --innodb_flush_log_at_trx_commit=1
+      --sync_binlog=1
+      --slow_query_log=1
+      --slow_query_log_file=/var/log/mysql/slow.log
+      --long_query_time=1
+      --general_log=0
+      --binlog_expire_logs_seconds=604800
+      --server-id=1
+      --log_bin=mysql-bin
+
+  # -----------------------------------------------------------
+  # Redis - Production: no exposed port, resource limits
+  # -----------------------------------------------------------
+  redis:
+    ports: !reset []
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 512m
+          cpus: "0.5"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 768mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --loglevel warning
+
+  # -----------------------------------------------------------
+  # Elasticsearch - Production: no exposed port, resource limits
+  # -----------------------------------------------------------
+  elasticsearch:
+    ports: !reset []
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "2.0"
+        reservations:
+          memory: 2g
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - cluster.name=marketplace-cluster-prod
+      - node.name=marketplace-node-1
+      - bootstrap.memory_lock=true
+
+  # -----------------------------------------------------------
+  # Kibana - Production: internal only, resource limits
+  # -----------------------------------------------------------
+  kibana:
+    ports: !reset []          # Kibana not exposed externally; use kubectl port-forward or VPN
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "0.5"
+        reservations:
+          memory: 512m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # -----------------------------------------------------------
+  # Spring Boot Backend - Production: resource limits, logging
+  # -----------------------------------------------------------
+  marketplace-backend:
+    restart: always
+    ports: !reset []          # no direct port binding; only via nginx
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+        reservations:
+          memory: 1g
+          cpus: "0.5"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "10"
+        labels: "com.marketplace.service"
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      JAVA_OPTS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -XX:InitialRAMPercentage=50.0
+        -XX:+UseG1GC
+        -XX:+OptimizeStringConcat
+        -XX:+UseStringDeduplication
+        -Djava.security.egd=file:/dev/./urandom
+
+  # -----------------------------------------------------------
+  # Next.js Frontend - Production: resource limits, no dev tools
+  # -----------------------------------------------------------
+  marketplace-frontend:
+    restart: always
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 512m
+          cpus: "0.25"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+
+  # -----------------------------------------------------------
+  # Nginx - Production: resource limits, security hardening
+  # -----------------------------------------------------------
+  nginx:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+        reservations:
+          memory: 128m
+          cpus: "0.25"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "10"

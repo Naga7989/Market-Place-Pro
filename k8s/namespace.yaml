@@ -1,0 +1,121 @@
+# =============================================================
+# KUBERNETES NAMESPACES
+# India-First Enterprise Marketplace Platform
+# =============================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace
+    app.kubernetes.io/environment: production
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    description: "BazaarIndia marketplace production namespace"
+    contact: "platform-team@bazaarindia.in"
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: marketplace-dev
+  labels:
+    app.kubernetes.io/name: marketplace
+    app.kubernetes.io/environment: development
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    description: "BazaarIndia marketplace development namespace"
+    contact: "platform-team@bazaarindia.in"
+
+---
+# Resource Quota for production namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: marketplace-prod-quota
+  namespace: marketplace-prod
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    pods: "100"
+    services: "30"
+    persistentvolumeclaims: "20"
+    secrets: "50"
+    configmaps: "50"
+
+---
+# Resource Quota for development namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: marketplace-dev-quota
+  namespace: marketplace-dev
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    pods: "30"
+    services: "15"
+    persistentvolumeclaims: "10"
+
+---
+# LimitRange for production namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: marketplace-prod-limits
+  namespace: marketplace-prod
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: "512Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "128Mi"
+      max:
+        cpu: "4"
+        memory: "8Gi"
+      min:
+        cpu: "50m"
+        memory: "64Mi"
+    - type: Pod
+      max:
+        cpu: "8"
+        memory: "16Gi"
+    - type: PersistentVolumeClaim
+      max:
+        storage: 100Gi
+      min:
+        storage: 1Gi
+
+---
+# LimitRange for dev namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: marketplace-dev-limits
+  namespace: marketplace-dev
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "250m"
+        memory: "256Mi"
+      defaultRequest:
+        cpu: "50m"
+        memory: "64Mi"
+      max:
+        cpu: "2"
+        memory: "4Gi"
+      min:
+        cpu: "10m"
+        memory: "32Mi"

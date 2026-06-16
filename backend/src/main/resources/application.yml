@@ -1,0 +1,197 @@
+# ============================================================
+# MarketPlace Pro - Application Configuration
+# ============================================================
+
+spring:
+  application:
+    name: marketplace-backend
+
+  # ── Disable unused services for local dev ─────────────────
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  # ── Database ──────────────────────────────────────────────
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:marketplace_db}?useSSL=false&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-pool-name: MarketplaceHikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: true
+
+  # ── JPA / Hibernate ──────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: update   # auto-creates tables on startup
+    show-sql: false
+    open-in-view: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 25
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+        default_batch_fetch_size: 16
+        timezone:
+          default_storage: NORMALIZE
+
+  # ── Flyway ───────────────────────────────────────────────
+  flyway:
+    enabled: false   # disabled for local dev — Hibernate creates tables via ddl-auto
+
+  # ── Redis (disabled for local dev — no Redis server needed) ─
+  # data:
+  #   redis:
+  #     host: localhost
+  #     port: 6379
+
+  # ── Cache ────────────────────────────────────────────────
+  cache:
+    type: simple   # in-memory cache, no Redis needed
+
+  # ── Mail ─────────────────────────────────────────────────
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+  # ── OAuth2 / Google ──────────────────────────────────────
+  # Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET env vars for Google login
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:PLACEHOLDER_REPLACE_ME}
+            client-secret: ${GOOGLE_CLIENT_SECRET:PLACEHOLDER_REPLACE_ME}
+            redirect-uri: '{baseUrl}/oauth2/callback/google'
+            scope: openid,email,profile
+
+  # ── File Upload ──────────────────────────────────────────
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+# ── Server ───────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api/v1
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  error:
+    include-message: on_param
+    include-binding-errors: on_param
+
+# ── Actuator ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: false
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    ping:
+      enabled: true
+
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# ── Logging ──────────────────────────────────────────────────
+logging:
+  level:
+    com.marketplace: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/marketplace.log
+    max-size: 100MB
+    max-history: 30
+
+# ── App Custom Properties ────────────────────────────────────
+app:
+  jwt:
+    secret: ${JWT_SECRET:yourSuperSecretKeyThatIsAtLeast256BitsLong_ChangeInProduction_2024!}
+    expiration: ${JWT_EXPIRATION:86400000}        # 24 hours in ms
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in ms
+
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:}
+    key-secret: ${RAZORPAY_KEY_SECRET:}
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
+
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID:ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-number: ${TWILIO_FROM_NUMBER:}
+
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-1.5-pro
+
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+
+  mail:
+    from-email: ${FROM_EMAIL:noreply@marketplace.in}
+    from-name: MarketPlace Pro
+
+  commission:
+    default-rate: 0.05  # 5% default commission
+    premium-rate: 0.03  # 3% for premium vendors
+
+  delivery:
+    charge: 49.00
+    free-threshold: 499.00
+
+  otp:
+    expiry-minutes: 10
+    length: 6

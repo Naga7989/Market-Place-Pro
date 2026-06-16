@@ -1,0 +1,206 @@
+# =============================================================
+# KUBERNETES CONFIGMAPS
+# India-First Enterprise Marketplace Platform
+# =============================================================
+
+---
+# Backend Application ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-backend-config
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-backend
+    app.kubernetes.io/component: config
+    app.kubernetes.io/managed-by: kubectl
+data:
+  # Spring Boot
+  SPRING_PROFILES_ACTIVE: "production"
+  SERVER_PORT: "8080"
+  MANAGEMENT_PORT: "8081"
+  TZ: "Asia/Kolkata"
+
+  # Database
+  SPRING_DATASOURCE_URL: "jdbc:mysql://marketplace-mysql-headless:3306/marketplace_db?useSSL=true&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&rewriteBatchedStatements=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048"
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: "com.mysql.cj.jdbc.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQLDialect"
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
+
+  # Database Pool (HikariCP)
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "50"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "10"
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+  SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+  SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
+
+  # Redis
+  SPRING_REDIS_HOST: "marketplace-redis-service"
+  SPRING_REDIS_PORT: "6379"
+  SPRING_REDIS_DATABASE: "0"
+  SPRING_REDIS_TIMEOUT: "2000ms"
+  SPRING_REDIS_LETTUCE_POOL_MAX_ACTIVE: "20"
+  SPRING_REDIS_LETTUCE_POOL_MAX_IDLE: "10"
+
+  # Elasticsearch
+  ELASTICSEARCH_HOST: "marketplace-elasticsearch-service"
+  ELASTICSEARCH_PORT: "9200"
+  ELASTICSEARCH_SCHEME: "http"
+  ELASTICSEARCH_CONNECT_TIMEOUT: "5000"
+  ELASTICSEARCH_SOCKET_TIMEOUT: "60000"
+
+  # JWT Configuration
+  JWT_EXPIRATION_MS: "900000"
+  JWT_REFRESH_EXPIRATION_DAYS: "30"
+
+  # Flyway Migration
+  SPRING_FLYWAY_ENABLED: "true"
+  SPRING_FLYWAY_LOCATIONS: "classpath:db/migration"
+  SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+
+  # AWS S3
+  AWS_REGION: "ap-south-1"
+  AWS_S3_BUCKET: "marketplace-uploads-prod"
+  AWS_S3_URL_EXPIRY_HOURS: "24"
+
+  # Razorpay
+  RAZORPAY_CURRENCY: "INR"
+  RAZORPAY_WEBHOOK_SECRET_KEY: "webhook-secret-override-via-secret"
+
+  # Google Gemini AI
+  GEMINI_MODEL: "gemini-1.5-pro"
+  GEMINI_MAX_TOKENS: "2048"
+  GEMINI_TEMPERATURE: "0.7"
+
+  # OTP
+  OTP_EXPIRY_MINUTES: "10"
+  OTP_LENGTH: "6"
+  OTP_PROVIDER: "TWILIO"
+
+  # Platform settings
+  PLATFORM_COMMISSION_DEFAULT: "10"
+  PLATFORM_COMMISSION_SERVICE: "15"
+  PLATFORM_COMMISSION_FREELANCER: "12"
+  PLATFORM_MIN_ORDER_AMOUNT: "99"
+  PLATFORM_FREE_DELIVERY_THRESHOLD: "499"
+  PLATFORM_COD_LIMIT: "10000"
+
+  # CORS
+  CORS_ALLOWED_ORIGINS: "https://marketplace.example.com,https://www.marketplace.example.com"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+
+  # Actuator
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when_authorized"
+
+  # Logging
+  LOGGING_LEVEL_ROOT: "WARN"
+  LOGGING_LEVEL_IN_BAZAARINDIA: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: "WARN"
+  LOGGING_LEVEL_ORG_HIBERNATE: "WARN"
+
+  # Mail
+  SPRING_MAIL_HOST: "smtp.gmail.com"
+  SPRING_MAIL_PORT: "587"
+  SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+  SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+  MAIL_FROM_ADDRESS: "noreply@bazaarindia.in"
+  MAIL_FROM_NAME: "BazaarIndia"
+
+---
+# Frontend Application ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-frontend-config
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-frontend
+    app.kubernetes.io/component: config
+    app.kubernetes.io/managed-by: kubectl
+data:
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_API_URL: "https://marketplace.example.com/api"
+  NEXT_PUBLIC_WS_URL: "wss://marketplace.example.com/ws"
+  NEXT_PUBLIC_SITE_URL: "https://marketplace.example.com"
+  NEXT_PUBLIC_SITE_NAME: "BazaarIndia"
+  NEXT_PUBLIC_CURRENCY: "INR"
+  NEXT_PUBLIC_CURRENCY_SYMBOL: "₹"
+  NEXT_PUBLIC_GOOGLE_MAPS_API_URL: "https://maps.googleapis.com/maps/api"
+  NEXTAUTH_URL: "https://marketplace.example.com"
+  PORT: "3000"
+  TZ: "Asia/Kolkata"
+
+---
+# Nginx ConfigMap (inline nginx.conf)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-nginx-config
+  namespace: marketplace-prod
+  labels:
+    app.kubernetes.io/name: marketplace-nginx
+    app.kubernetes.io/component: config
+data:
+  nginx.conf: |
+    upstream backend { server marketplace-backend-service:8080; }
+    upstream frontend { server marketplace-frontend-service:3000; }
+    server {
+      listen 80;
+      server_name _;
+      client_max_body_size 50m;
+      gzip on;
+      gzip_types text/plain application/json application/javascript text/css;
+      location /api/ {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+      location /ws {
+        proxy_pass http://backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+      }
+      location / {
+        proxy_pass http://frontend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+      }
+    }
+
+---
+# DEV environment ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketplace-backend-config
+  namespace: marketplace-dev
+  labels:
+    app.kubernetes.io/name: marketplace-backend
+    app.kubernetes.io/component: config
+    app.kubernetes.io/environment: development
+data:
+  SPRING_PROFILES_ACTIVE: "development"
+  SERVER_PORT: "8080"
+  TZ: "Asia/Kolkata"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://marketplace-mysql-headless:3306/marketplace_db_dev?useSSL=false&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true&characterEncoding=UTF-8"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_JPA_SHOW_SQL: "true"
+  SPRING_REDIS_HOST: "marketplace-redis-service"
+  SPRING_REDIS_PORT: "6379"
+  ELASTICSEARCH_HOST: "marketplace-elasticsearch-service"
+  ELASTICSEARCH_PORT: "9200"
+  JWT_EXPIRATION_MS: "3600000"
+  JWT_REFRESH_EXPIRATION_DAYS: "7"
+  AWS_REGION: "ap-south-1"
+  AWS_S3_BUCKET: "marketplace-uploads-dev"
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_IN_BAZAARINDIA: "DEBUG"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus,env,beans"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  CORS_ALLOWED_ORIGINS: "*"
