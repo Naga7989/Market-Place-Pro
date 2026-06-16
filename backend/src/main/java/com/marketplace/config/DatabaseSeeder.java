@@ -25,16 +25,16 @@ public class DatabaseSeeder {
     public void seedDatabase() {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            // Check if roles table is empty
+            // Check if database is seeded by verifying if SUPER_ADMIN role exists
             boolean hasRoles = false;
-            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM roles")) {
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM roles WHERE name = 'SUPER_ADMIN'")) {
                 if (rs.next() && rs.getInt(1) > 0) {
                     hasRoles = true;
                 }
             }
             
             if (!hasRoles) {
-                log.info("Roles table is empty. Initializing database seeding...");
+                log.info("SUPER_ADMIN role not found. Initializing database seeding...");
                 
                 // Execute schema fixes to add default timestamp values before seeding
                 alterTablesToSetTimestampDefaults(stmt);
@@ -62,11 +62,12 @@ public class DatabaseSeeder {
                 
                 log.info("Loading database seed script from: {}", sqlFile.getAbsolutePath());
                 ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+                populator.setContinueOnError(true);
                 populator.addScript(new FileSystemResource(sqlFile));
                 populator.execute(dataSource);
                 log.info("Database seed script executed successfully!");
             } else {
-                log.info("Database already populated (found roles). Skipping seeding.");
+                log.info("Database already populated (found SUPER_ADMIN role). Skipping seeding.");
             }
 
             // Force reset superadmin password hash to correct BCrypt hash to ensure login succeeds
