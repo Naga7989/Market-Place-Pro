@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+let rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+rawBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+if (rawBaseUrl && !rawBaseUrl.endsWith('/api/v1')) {
+  if (rawBaseUrl.endsWith('/api')) {
+    rawBaseUrl += '/v1';
+  } else {
+    rawBaseUrl += '/api/v1';
+  }
+}
+
+export const API_BASE_URL = rawBaseUrl;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, authActions } from '@/store';
+import { apiClient } from '@/lib/api';
 
 // ─────────────────── Schema ───────────────────
 const registerSchema = z.object({
@@ -43,12 +44,8 @@ export default function RegisterPage() {
   const handleRegister = async (data: RegisterData) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
+      const res = await apiClient.post('/auth/register', data);
+      const result = res.data;
       if (result.success) {
         dispatch(authActions.setUser({
           user: result.data.user,
@@ -62,8 +59,9 @@ export default function RegisterPage() {
       } else {
         toast.error(result.message || 'Registration failed');
       }
-    } catch {
-      toast.error('Connection error. Please try again.');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Connection error. Please try again.';
+      toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }

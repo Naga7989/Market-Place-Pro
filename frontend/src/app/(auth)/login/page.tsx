@@ -10,6 +10,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector, authActions } from '@/store';
+import { apiClient, API_BASE_URL } from '@/lib/api';
 
 // ─────────────────── Schemas ───────────────────
 const emailLoginSchema = z.object({
@@ -99,12 +100,8 @@ export default function LoginPage() {
   const handleEmailLogin = async (data: EmailLoginData) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
+      const res = await apiClient.post('/auth/login', data);
+      const result = res.data;
       if (result.success) {
         dispatch(authActions.setUser({
           user: result.data.user,
@@ -118,8 +115,9 @@ export default function LoginPage() {
       } else {
         toast.error(result.message || 'Login failed');
       }
-    } catch {
-      toast.error('Connection error. Please try again.');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Connection error. Please try again.';
+      toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -128,12 +126,8 @@ export default function LoginPage() {
   const handleSendOtp = async (data: OtpData) => {
     setOtpLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/otp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: data.phone, purpose: 'LOGIN' }),
-      });
-      const result = await res.json();
+      const res = await apiClient.post('/auth/otp/send', { phone: data.phone, purpose: 'LOGIN' });
+      const result = res.data;
       if (result.success) {
         setPhone(data.phone);
         setOtpSent(true);
@@ -142,8 +136,9 @@ export default function LoginPage() {
       } else {
         toast.error(result.message || 'Failed to send OTP');
       }
-    } catch {
-      toast.error('Failed to send OTP. Please try again.');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Failed to send OTP. Please try again.';
+      toast.error(errMsg);
     } finally {
       setOtpLoading(false);
     }
@@ -153,12 +148,8 @@ export default function LoginPage() {
     if (otp.length < 6) { toast.error('Enter the complete 6-digit OTP'); return; }
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/otp/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp }),
-      });
-      const result = await res.json();
+      const res = await apiClient.post('/auth/otp/verify', { phone, otp });
+      const result = res.data;
       if (result.success) {
         dispatch(authActions.setUser({
           user: result.data.user,
@@ -172,15 +163,16 @@ export default function LoginPage() {
       } else {
         toast.error(result.message || 'Invalid OTP');
       }
-    } catch {
-      toast.error('Verification failed. Please try again.');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Verification failed. Please try again.';
+      toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/google`;
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
   const features = [
