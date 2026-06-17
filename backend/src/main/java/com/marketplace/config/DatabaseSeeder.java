@@ -39,31 +39,17 @@ public class DatabaseSeeder {
                 // Execute schema fixes to add default timestamp values before seeding
                 alterTablesToSetTimestampDefaults(stmt);
                 
-                // Try absolute path first, fallback to relative paths
-                String[] paths = {
-                    "C:/Users/snaga/.gemini/antigravity/scratch/marketplace/database/V2__seed_data.sql",
-                    "database/V2__seed_data.sql",
-                    "../database/V2__seed_data.sql"
-                };
-                
-                File sqlFile = null;
-                for (String path : paths) {
-                    File f = new File(path);
-                    if (f.exists()) {
-                        sqlFile = f;
-                        break;
-                    }
-                }
-                
-                if (sqlFile == null) {
-                    log.error("Database seed SQL file not found in any search path!");
+                // Load database seed script from classpath
+                org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource("db/V2__seed_data.sql");
+                if (!resource.exists()) {
+                    log.error("Database seed SQL file not found in classpath (db/V2__seed_data.sql)!");
                     return;
                 }
                 
-                log.info("Loading database seed script from: {}", sqlFile.getAbsolutePath());
+                log.info("Loading database seed script from classpath: {}", resource.getPath());
                 ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
                 populator.setContinueOnError(true);
-                populator.addScript(new FileSystemResource(sqlFile));
+                populator.addScript(resource);
                 populator.execute(dataSource);
                 log.info("Database seed script executed successfully!");
             } else {
