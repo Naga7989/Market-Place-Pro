@@ -89,13 +89,20 @@
 
   html {
     scroll-behavior: smooth;
+    /* Offset anchor links so content isn't hidden under sticky navbar */
+    scroll-padding-top: 72px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Natural momentum-like overscroll on all axes */
+    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Smooth momentum scrolling on iOS / trackpads */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6 {

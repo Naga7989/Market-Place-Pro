@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Toaster } from "react-hot-toast";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -106,6 +107,7 @@ export default function RootLayout({
           <ReduxProvider>
             <QueryProvider>
               {children}
+              <ScrollToTop />
               <Toaster
                 position="top-right"
                 toastOptions={{

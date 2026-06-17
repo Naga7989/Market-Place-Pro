@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import {
 import { useTheme } from 'next-themes';
 import { useAppDispatch, useAppSelector, authActions } from '@/store';
 import { getUserRole } from '@/lib/utils';
+import { ScrollProgressBar } from '@/components/ui/ScrollProgressBar';
 
 const navLinks = [
   { label: 'Products', href: '/products' },
@@ -66,6 +67,16 @@ export function Navbar({ cartCount = 0, notificationCount = 0, isLoggedIn = fals
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+
+  const handleScrollShadow = useCallback(() => {
+    setScrolled(window.scrollY > 8);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScrollShadow, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollShadow);
+  }, [handleScrollShadow]);
 
   // Sync dark mode configuration on mount
   useEffect(() => {
@@ -119,7 +130,11 @@ export function Navbar({ cartCount = 0, notificationCount = 0, isLoggedIn = fals
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-background/80 backdrop-blur-xl border-b border-border/50 transition-colors duration-300">
+      <header className={`sticky top-0 z-50 backdrop-blur-xl border-b transition-all duration-300 ${
+        scrolled
+          ? 'bg-white/90 dark:bg-background/90 border-border/60 shadow-sm shadow-slate-200/40 dark:shadow-black/30'
+          : 'bg-white/80 dark:bg-background/80 border-border/50'
+      }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center h-16 gap-4">
             {/* Logo */}
@@ -359,14 +374,18 @@ export function Navbar({ cartCount = 0, notificationCount = 0, isLoggedIn = fals
           </div>
         </div>
 
-        {/* Mobile menu */}
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden border-t border-border bg-card overflow-hidden"
+        {/* Scroll Progress Bar */}
+        <ScrollProgressBar />
+      </header>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden border-t border-border bg-card overflow-hidden"
             >
               <div className="container mx-auto px-4 py-3 space-y-1">
                 {/* Categories Trigger inside Mobile Menu */}
@@ -421,9 +440,8 @@ export function Navbar({ cartCount = 0, notificationCount = 0, isLoggedIn = fals
                 ))}
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+        )}
+      </AnimatePresence>
 
       {/* Mobile search overlay */}
       <AnimatePresence>
