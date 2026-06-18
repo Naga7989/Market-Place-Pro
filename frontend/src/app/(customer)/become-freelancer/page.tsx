@@ -1,18 +1,20 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Terminal, Users, Globe, Shield, ArrowRight } from 'lucide-react';
+import { Terminal, Users, Globe, Shield, ArrowRight, LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+
+type Benefit = { Icon: LucideIcon; iconClass: string; title: string; desc: string };
+
+const benefits: Benefit[] = [
+  { Icon: Globe, iconClass: 'text-primary', title: 'Global Opportunities', desc: 'Find high-paying project listings and get hired by buyers across all sectors.' },
+  { Icon: Shield, iconClass: 'text-success', title: 'Secure Escrow System', desc: 'No unpaid invoices. Payments are held in secure escrow and released on milestones.' },
+  { Icon: Users, iconClass: 'text-secondary', title: 'Freelancer Community', desc: 'Access exclusive networking forums, partner templates, and learning guides.' },
+];
 
 export default function BecomeFreelancerPage() {
   const categories = [
     'Software & Web Apps', 'Graphic Design & Logos', 'Content Writing & SEO', 'Video Editing & VFX', 'Digital Marketing', 'Translation Services'
-  ];
-
-  const benefits = [
-    { icon: <Globe className="w-5 h-5 text-primary" />, title: 'Global Opportunities', desc: 'Find high-paying project listings and get hired by buyers across all sectors.' },
-    { icon: <Shield className="w-5 h-5 text-success" />, title: 'Secure Escrow System', desc: 'No unpaid invoices. Payments are held in secure escrow and released on milestones.' },
-    { icon: <Users className="w-5 h-5 text-secondary" />, title: 'Freelancer Community', desc: 'Access exclusive networking forums, partner templates, and learning guides.' }
   ];
 
   return (
@@ -42,19 +44,19 @@ export default function BecomeFreelancerPage() {
 
         {/* Benefits Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-          {benefits.map((b, i) => (
+          {benefits.map(({ Icon, iconClass, title, desc }, i) => (
             <motion.div
-              key={b.title}
+              key={title}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className="card-premium"
             >
               <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-5">
-                {b.icon}
+                <Icon className={`w-5 h-5 ${iconClass}`} />
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">{b.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{b.desc}</p>
+              <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
             </motion.div>
           ))}
         </div>

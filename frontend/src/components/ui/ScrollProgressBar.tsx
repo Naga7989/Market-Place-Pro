@@ -1,23 +1,25 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { motion, useSpring, useTransform, useMotionValue } from 'framer-motion';
+import { useEffect, useCallback } from 'react';
+import { motion, useSpring, useMotionValue, useTransform } from 'framer-motion';
 
 export function ScrollProgressBar() {
-  const scrollY = useMotionValue(0);
-  const progress = useTransform(scrollY, (v) => {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    return docHeight > 0 ? (v / docHeight) * 100 : 0;
-  });
-
-  const scaleX = useTransform(progress, [0, 100], [0, 1]);
+  // Start at 0 — computed only inside useEffect (browser-safe)
+  const rawProgress = useMotionValue(0);
+  // Convert 0–100 range to scaleX 0–1
+  const scaleX = useTransform(rawProgress, [0, 100], [0, 1]);
   const springScaleX = useSpring(scaleX, { stiffness: 200, damping: 30 });
 
   const handleScroll = useCallback(() => {
-    scrollY.set(window.scrollY);
-  }, [scrollY]);
+    // Safe: called only from useEffect / event listener (browser only)
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+    rawProgress.set(pct);
+  }, [rawProgress]);
 
   useEffect(() => {
+    // Initialise on mount
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);

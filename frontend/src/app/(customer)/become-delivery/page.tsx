@@ -1,15 +1,23 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Bike, DollarSign, Clock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Bike, DollarSign, Clock, ShieldCheck, ArrowRight, LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+type Highlight = {
+  Icon: LucideIcon;
+  iconClass: string;
+  title: string;
+  desc: string;
+};
+
+const highlights: Highlight[] = [
+  { Icon: DollarSign, iconClass: 'text-primary', title: 'Attractive Pay & Incentives', desc: 'Earn competitive trip charges, distance premiums, and peak-hour bonus payouts.' },
+  { Icon: Clock, iconClass: 'text-success', title: 'Flexible Delivery Slots', desc: 'Work part-time or full-time. Choose your own schedules and service range.' },
+  { Icon: ShieldCheck, iconClass: 'text-secondary', title: 'Insurance & Safety Kits', desc: 'Rider medical insurance and delivery gear support provided directly by us.' },
+];
+
 export default function BecomeDeliveryPage() {
-  const highlights = [
-    { icon: <DollarSign className="w-5 h-5 text-primary" />, title: 'Attractive Pay & Incentives', desc: 'Earn competitive trip charges, distance premiums, and peak-hour bonus payouts.' },
-    { icon: <Clock className="w-5 h-5 text-success" />, title: 'Flexible Delivery Slots', desc: 'Work part-time or full-time. Choose your own schedules and service range.' },
-    { icon: <ShieldCheck className="w-5 h-5 text-secondary" />, title: 'Insurance & Safety Kits', desc: 'Rider medical insurance and delivery gear support provided directly by us.' }
-  ];
 
   return (
     <div className="py-20 bg-background text-foreground min-h-screen">
@@ -38,19 +46,19 @@ export default function BecomeDeliveryPage() {
 
         {/* Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {highlights.map((h, i) => (
+          {highlights.map(({ Icon, iconClass, title, desc }, i) => (
             <motion.div
-              key={h.title}
+              key={title}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className="card-premium"
             >
               <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-5">
-                {h.icon}
+                <Icon className={`w-5 h-5 ${iconClass}`} />
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">{h.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{h.desc}</p>
+              <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
             </motion.div>
           ))}
         </div>

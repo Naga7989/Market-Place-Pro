@@ -1,23 +1,25 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TrendingUp, Users, ArrowRight, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, ArrowRight, DollarSign, LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
+type Highlight = { Icon: LucideIcon; iconClass: string; title: string; desc: string };
+
+const highlights: Highlight[] = [
+  { Icon: DollarSign, iconClass: 'text-primary', title: 'Low Commission Rates', desc: 'Keep maximum margins on your products. No hidden processing charges.' },
+  { Icon: TrendingUp, iconClass: 'text-success', title: 'Analytics & Insights', desc: 'Real-time sales charts, item performance statistics, and user query trackers.' },
+  { Icon: Users, iconClass: 'text-secondary', title: '10M+ Buyer Pool', desc: 'Instant exposure to millions of verified shoppers actively browsing listings.' },
+];
+
+const steps = [
+  { title: '1. Register Account', desc: 'Create a partner profile and select "Seller (Product Vendor)" role.' },
+  { title: '2. Upload Catalog', desc: 'List your items, set prices, stock details, and write specifications.' },
+  { title: '3. Receive Orders', desc: 'Start getting customer requests across all major Indian states.' },
+  { title: '4. Quick Payments', desc: 'Payments are settled to your bank account securely via Razorpay.' }
+];
+
 export default function BecomeSellerPage() {
-  const steps = [
-    { title: '1. Register Account', desc: 'Create a partner profile and select "Seller (Product Vendor)" role.' },
-    { title: '2. Upload Catalog', desc: 'List your items, set prices, stock details, and write specifications.' },
-    { title: '3. Receive Orders', desc: 'Start getting customer requests across all major Indian states.' },
-    { title: '4. Quick Payments', desc: 'Payments are settled to your bank account securely via Razorpay.' }
-  ];
-
-  const highlights = [
-    { icon: <DollarSign className="w-5 h-5 text-primary" />, title: 'Low Commission Rates', desc: 'Keep maximum margins on your products. No hidden processing charges.' },
-    { icon: <TrendingUp className="w-5 h-5 text-success" />, title: 'Analytics & Insights', desc: 'Real-time sales charts, item performance statistics, and user query trackers.' },
-    { icon: <Users className="w-5 h-5 text-secondary" />, title: '10M+ Buyer Pool', desc: 'Instant exposure to millions of verified shoppers actively browsing listings.' },
-  ];
-
   return (
     <div className="py-20 bg-background text-foreground min-h-screen">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -45,19 +47,19 @@ export default function BecomeSellerPage() {
 
         {/* Highlights Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-          {highlights.map((h, i) => (
+          {highlights.map(({ Icon, iconClass, title, desc }, i) => (
             <motion.div
-              key={h.title}
+              key={title}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className="card-premium"
             >
               <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-5">
-                {h.icon}
+                <Icon className={`w-5 h-5 ${iconClass}`} />
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">{h.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{h.desc}</p>
+              <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
             </motion.div>
           ))}
         </div>

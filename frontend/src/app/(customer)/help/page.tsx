@@ -1,42 +1,49 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { HelpCircle, Search, ShoppingCart, ShieldCheck, CreditCard, Users, ChevronDown } from 'lucide-react';
+import { HelpCircle, Search, ShoppingCart, ShieldCheck, CreditCard, Users, ChevronDown, LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+
+type Category = {
+  Icon: LucideIcon;
+  iconClass: string;
+  name: string;
+  count: string;
+};
+
+const categories: Category[] = [
+  { Icon: ShoppingCart, iconClass: 'text-primary', name: 'Shopping & Orders', count: '12 articles' },
+  { Icon: ShieldCheck, iconClass: 'text-success', name: 'Account & Security', count: '8 articles' },
+  { Icon: CreditCard, iconClass: 'text-secondary', name: 'Payments & Refunds', count: '10 articles' },
+  { Icon: Users, iconClass: 'text-warning', name: 'Partner Programs', count: '14 articles' },
+];
+
+const faqs = [
+  {
+    q: 'How do I track my order?',
+    a: 'Navigate to the Track Order link in the footer, or go to Dashboard > Orders in your account to view real-time shipping milestones and tracking links.'
+  },
+  {
+    q: 'What is the return policy?',
+    a: 'We offer a standard 7-day hassle-free return window for most eligible items. Simply visit the Returns section in your profile to raise a return ticket.'
+  },
+  {
+    q: 'How are home services verified?',
+    a: 'All service partners undergo identity checks, police validation, and physical interviews. Escrows are released only after you mark the booking complete.'
+  },
+  {
+    q: 'How do I register as a seller?',
+    a: 'Go to the Partner section, click Sell on Marketplace, fill out the GST and warehouse details, and your store will be activated within 24 hours.'
+  }
+];
 
 export default function HelpCenterPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
-  const categories = [
-    { icon: <ShoppingCart className="w-5 h-5 text-primary" />, name: 'Shopping & Orders', count: '12 articles' },
-    { icon: <ShieldCheck className="w-5 h-5 text-success" />, name: 'Account & Security', count: '8 articles' },
-    { icon: <CreditCard className="w-5 h-5 text-secondary" />, name: 'Payments & Refunds', count: '10 articles' },
-    { icon: <Users className="w-5 h-5 text-warning" />, name: 'Partner Programs', count: '14 articles' },
-  ];
-
-  const faqs = [
-    {
-      q: 'How do I track my order?',
-      a: 'Navigate to the Track Order link in the footer, or go to Dashboard > Orders in your account to view real-time shipping milestones and tracking links.'
-    },
-    {
-      q: 'What is the return policy?',
-      a: 'We offer a standard 7-day hassle-free return window for most eligible items. Simply visit the Returns section in your profile to raise a return ticket.'
-    },
-    {
-      q: 'How are home services verified?',
-      a: 'All service partners undergo identity checks, police validation, and physical interviews. Escrows are released only after you mark the booking complete.'
-    },
-    {
-      q: 'How do I register as a seller?',
-      a: 'Go to the Partner section, click Sell on Marketplace, fill out the GST and warehouse details, and your store will be activated within 24 hours.'
-    }
-  ];
-
-  const filteredFaqs = faqs.filter(faq => 
-    faq.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredFaqs = faqs.filter(faq =>
+    faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.a.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -67,20 +74,20 @@ export default function HelpCenterPage() {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20">
-          {categories.map((cat, i) => (
+          {categories.map(({ Icon, iconClass, name, count }, i) => (
             <motion.div
-              key={cat.name}
+              key={name}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => toast.success(`Viewing ${cat.name} help articles.`)}
+              onClick={() => toast.success(`Viewing ${name} help articles.`)}
               className="card-premium-interactive flex flex-col items-center cursor-pointer text-center"
             >
               <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
-                {cat.icon}
+                <Icon className={`w-5 h-5 ${iconClass}`} />
               </div>
-              <h3 className="text-sm font-bold text-foreground mb-1">{cat.name}</h3>
-              <span className="text-xs text-muted-foreground">{cat.count}</span>
+              <h3 className="text-sm font-bold text-foreground mb-1">{name}</h3>
+              <span className="text-xs text-muted-foreground">{count}</span>
             </motion.div>
           ))}
         </div>
@@ -88,7 +95,7 @@ export default function HelpCenterPage() {
         {/* FAQ Accordion Section */}
         <div>
           <h2 className="text-2xl font-bold font-heading mb-8 text-foreground flex items-center gap-2">
-            <HelpCircle className="w-5.5 h-5.5 text-primary" /> Frequently Asked Questions
+            <HelpCircle className="w-5 h-5 text-primary" /> Frequently Asked Questions
           </h2>
           <div className="space-y-4">
             {filteredFaqs.length > 0 ? (

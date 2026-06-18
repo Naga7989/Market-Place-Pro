@@ -1,24 +1,26 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Briefcase, Heart, Globe, Sparkles } from 'lucide-react';
+import { Briefcase, Heart, Globe, Sparkles, LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+type Perk = { Icon: LucideIcon; iconClass: string; title: string; desc: string };
+
+const perks: Perk[] = [
+  { Icon: Heart, iconClass: 'text-destructive', title: 'Health & Wellness', desc: 'Comprehensive medical insurance, wellness stipends, and mental health counseling support.' },
+  { Icon: Globe, iconClass: 'text-primary', title: 'Remote-First Culture', desc: 'Work from anywhere in India with set home-office setups and internet bills covered.' },
+  { Icon: Sparkles, iconClass: 'text-warning', title: 'Growth & Learning', desc: 'Generous annual learning budgets, mentorship programs, and sponsored certification plans.' },
+];
+
+const jobs = [
+  { title: 'Senior Full Stack Engineer', dept: 'Engineering', location: 'Bengaluru / Remote', type: 'Full-time' },
+  { title: 'Product UI/UX Designer', dept: 'Design', location: 'Bengaluru / Remote', type: 'Full-time' },
+  { title: 'Lead Marketing Specialist', dept: 'Growth', location: 'Remote', type: 'Full-time' },
+  { title: 'Operations Associate', dept: 'Operations', location: 'Mumbai', type: 'Full-time' },
+  { title: 'Customer Support Lead', dept: 'Support', location: 'Remote', type: 'Full-time' },
+];
+
 export default function CareersPage() {
-  const jobs = [
-    { title: 'Senior Full Stack Engineer', dept: 'Engineering', location: 'Bengaluru / Remote', type: 'Full-time' },
-    { title: 'Product UI/UX Designer', dept: 'Design', location: 'Bengaluru / Remote', type: 'Full-time' },
-    { title: 'Lead Marketing Specialist', dept: 'Growth', location: 'Remote', type: 'Full-time' },
-    { title: 'Operations Associate', dept: 'Operations', location: 'Mumbai', type: 'Full-time' },
-    { title: 'Customer Support Lead', dept: 'Support', location: 'Remote', type: 'Full-time' },
-  ];
-
-  const perks = [
-    { icon: <Heart className="w-5 h-5 text-destructive" />, title: 'Health & Wellness', desc: 'Comprehensive medical insurance, wellness stipends, and mental health counseling support.' },
-    { icon: <Globe className="w-5 h-5 text-primary" />, title: 'Remote-First Culture', desc: 'Work from anywhere in India with set home-office setups and internet bills covered.' },
-    { icon: <Sparkles className="w-5 h-5 text-warning" />, title: 'Growth & Learning', desc: 'Generous annual learning budgets, mentorship programs, and sponsored certification plans.' },
-  ];
-
   return (
     <div className="py-20 bg-background text-foreground min-h-screen">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -42,21 +44,21 @@ export default function CareersPage() {
             Perks & Benefits at MarketPlace Pro
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {perks.map((perk, i) => (
-              <motion.div
-                key={perk.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="card-premium-interactive"
-              >
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-5 flex-shrink-0">
-                  {perk.icon}
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{perk.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{perk.desc}</p>
-              </motion.div>
-            ))}
+          {perks.map(({ Icon, iconClass, title, desc }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className="card-premium-interactive"
+            >
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-5 flex-shrink-0">
+                <Icon className={`w-5 h-5 ${iconClass}`} />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
+            </motion.div>
+          ))}
           </div>
         </div>
 

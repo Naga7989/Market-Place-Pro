@@ -1,20 +1,23 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { RotateCcw, ShieldCheck, Truck, CreditCard, HelpCircle } from 'lucide-react';
+import { RotateCcw, ShieldCheck, Truck, CreditCard, HelpCircle, LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+
+type Step = { Icon: LucideIcon; iconClass: string; title: string; desc: string };
+
+const steps: Step[] = [
+  { Icon: RotateCcw, iconClass: 'text-primary', title: '1. Initiate Request', desc: 'Go to Order History, select the item you want to return, and provide a reason.' },
+  { Icon: Truck, iconClass: 'text-success', title: '2. Free Pickup', desc: 'Our courier partner will pick up the package from your delivery address within 24-48 hours.' },
+  { Icon: ShieldCheck, iconClass: 'text-warning', title: '3. Quality Check', desc: 'Once the item reaches our fulfillment center, we perform a quality inspection.' },
+  { Icon: CreditCard, iconClass: 'text-secondary', title: '4. Quick Refund', desc: 'Approved refunds are credited to your original payment method or wallet instantly.' },
+];
 
 export default function ReturnsPage() {
   const [orderId, setOrderId] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const steps = [
-    { icon: <RotateCcw className="w-5 h-5 text-primary" />, title: '1. Initiate Request', desc: 'Go to Order History, select the item you want to return, and provide a reason.' },
-    { icon: <Truck className="w-5 h-5 text-success" />, title: '2. Free Pickup', desc: 'Our courier partner will pick up the package from your delivery address within 24-48 hours.' },
-    { icon: <ShieldCheck className="w-5 h-5 text-warning" />, title: '3. Quality Check', desc: 'Once the item reaches our fulfillment center, we perform a quality inspection.' },
-    { icon: <CreditCard className="w-5 h-5 text-secondary" />, title: '4. Quick Refund', desc: 'Approved refunds are credited to your original payment method or wallet instantly.' },
-  ];
 
   const handleCheckEligibility = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,19 +77,19 @@ export default function ReturnsPage() {
             How the Return Process Works
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, i) => (
+            {steps.map(({ Icon, iconClass, title, desc }, i) => (
               <motion.div
-                key={step.title}
+                key={title}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
                 className="card-premium flex flex-col items-start"
               >
                 <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-4 flex-shrink-0">
-                  {step.icon}
+                  <Icon className={`w-5 h-5 ${iconClass}`} />
                 </div>
-                <h3 className="font-bold text-foreground mb-2 text-sm uppercase tracking-wide">{step.title}</h3>
-                <p className="text-muted-foreground text-xs leading-relaxed">{step.desc}</p>
+                <h3 className="font-bold text-foreground mb-2 text-sm uppercase tracking-wide">{title}</h3>
+                <p className="text-muted-foreground text-xs leading-relaxed">{desc}</p>
               </motion.div>
             ))}
           </div>

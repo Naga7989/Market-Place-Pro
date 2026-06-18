@@ -93,8 +93,10 @@
     scroll-padding-top: 72px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Natural momentum-like overscroll on all axes */
-    overscroll-behavior-y: none;
+    /* Prevent overscroll bounce bleed from inner containers */
+    overscroll-behavior: none;
+    /* GPU-accelerated smooth scrolling */
+    will-change: scroll-position;
   }
 
   body {
@@ -102,7 +104,9 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Smooth momentum scrolling on iOS / trackpads */
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
+    /* Subtle transform layer for compositor promotion */
+    transform: translateZ(0);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -131,8 +135,8 @@
    SCROLLBAR STYLING
    ============================================================ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -140,20 +144,21 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.3);
-  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.25);
+  border-radius: 100px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.55);
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.35); /* Premium purple scrollbar */
+  background: rgba(139, 92, 246, 0.3);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.55);
+  background: rgba(139, 92, 246, 0.6);
 }
 
 /* ============================================================
