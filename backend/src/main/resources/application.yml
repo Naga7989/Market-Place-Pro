@@ -6,18 +6,16 @@ spring:
   application:
     name: marketplace-backend
 
-  # ── Disable unused services for local dev ─────────────────
+  # ── Disable unused services ───────────────────────────────
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
-      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
   # ── Database ──────────────────────────────────────────────
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:marketplace_db}?useSSL=false&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:marketplace_db}?useSSL=${DB_USE_SSL:false}&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&connectTimeout=10000&socketTimeout=30000
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,10 +23,11 @@ spring:
       connection-pool-name: MarketplaceHikariPool
       maximum-pool-size: 20
       minimum-idle: 5
-      connection-timeout: 30000
+      connection-timeout: 15000
       idle-timeout: 600000
       max-lifetime: 1800000
       auto-commit: true
+      initialization-fail-timeout: 30000
 
   # ── JPA / Hibernate ──────────────────────────────────────
   jpa:
